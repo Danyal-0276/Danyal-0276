@@ -14,29 +14,39 @@ IMG = Path(
     r"9.41.08_AM-45fab759-4f4e-4b62-9b7e-78bf1a3e74a6.png"
 )
 
-COLS = 95
-ROWS = 53
+# VISUAL.MAP panel: x=14..502, y=26..494 (in translated group)
+# Fill nearly the full cell with tight margins.
+ASCII_X = 20
+ASCII_START_Y = 48.0
+ASCII_STEP = 7.05
+ASCII_FONT_SIZE = 6.9
+COLS = 112  # ~ (502-20) / 4.3px char width
+ROWS = 62   # ~ (486-48) / 7.05
 CHARS = " .:-;=+*#%@"
 
 
 def make_ascii(path: Path) -> list[str]:
     img = Image.open(path).convert("RGB")
     w, h = img.size
-    # Focus on face / upper torso
-    img = img.crop((int(w * 0.10), int(h * 0.00), int(w * 0.90), int(h * 0.70)))
+    # Tighter crop on face / upper torso so subject fills the cell
+    img = img.crop((int(w * 0.18), int(h * 0.02), int(w * 0.82), int(h * 0.62)))
     img = ImageOps.grayscale(img)
-    img = ImageEnhance.Contrast(img).enhance(1.65)
-    img = ImageEnhance.Brightness(img).enhance(1.08)
+    img = ImageOps.autocontrast(img, cutoff=2)
+    img = ImageEnhance.Contrast(img).enhance(1.75)
+    img = ImageEnhance.Brightness(img).enhance(1.02)
     img = img.filter(ImageFilter.SHARPEN)
     img = img.resize((COLS, ROWS), Image.Resampling.LANCZOS)
 
     lines: list[str] = []
-    pixels = list(img.getdata())
+    pixels = list(img.get_flattened_data())
     for y in range(ROWS):
         row = []
         for x in range(COLS):
             val = pixels[y * COLS + x]
             t = 1.0 - (val / 255.0)
+            # Lift near-white background to light dots so the cell looks filled
+            if t < 0.08:
+                t = 0.08
             idx = int(t * (len(CHARS) - 1))
             row.append(CHARS[idx])
         lines.append("".join(row).ljust(COLS)[:COLS])
@@ -45,20 +55,17 @@ def make_ascii(path: Path) -> list[str]:
 
 def dots(label: str, value: str, width: int = 48) -> str:
     """Pad with dots between label and value like the original layout."""
-    # Approximate visual width used by original: label + ': ' + dots + ' ' + value
     base = f"{label}: "
     space_for_dots = max(3, width - len(base) - len(value))
     return f"{base}{'.' * space_for_dots} {value}"
 
 
 def ascii_tspans(lines: list[str]) -> str:
-    start_y = 79.98
-    step = 7.55
     out = []
     for i, line in enumerate(lines):
-        y = start_y + i * step
+        y = ASCII_START_Y + i * ASCII_STEP
         out.append(
-            f'<tspan x="30" y="{y:.2f}" xml:space="preserve">{escape(line)}</tspan>'
+            f'<tspan x="{ASCII_X}" y="{y:.2f}" xml:space="preserve">{escape(line)}</tspan>'
         )
     return "\n".join(out)
 
@@ -217,32 +224,32 @@ def info_panel(fill: str) -> str:
     return "".join(blocks)
 
 
-DARK_DEFS_STYLE = """
-    .ascii  { font-family: 'Courier New', Consolas, monospace; font-size: 7.4px; fill: url(#asciiGrad); letter-spacing: -0.2px; }
-    .key    { font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #22D3EE; font-weight: bold; }
-    .value  { font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #E5E7EB; }
-    .cc     { font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #475569; }
-    .head   { font-family: 'Courier New', Consolas, monospace; font-size: 17px; fill: #7C3AED; font-weight: bold; }
-    .accent { font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #10B981; font-weight: bold; }
-    text, tspan { white-space: pre; }
-    .term-label { font-family: 'Courier New', Consolas, monospace; font-size: 12px; fill: #64748B; letter-spacing: 0.5px; }
-    .scan-label { font-family: 'Courier New', Consolas, monospace; font-size: 10px; fill: #F87171; letter-spacing: 1px; }
-    .panel-title { font-family: 'Courier New', Consolas, monospace; font-size: 11px; fill: #38BDF8; letter-spacing: 2px; opacity: 0.7; }
-    .cursor-blink { fill: #22D3EE; }
+DARK_DEFS_STYLE = f"""
+    .ascii  {{ font-family: 'Courier New', Consolas, monospace; font-size: {ASCII_FONT_SIZE}px; fill: url(#asciiGrad); letter-spacing: -0.35px; }}
+    .key    {{ font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #22D3EE; font-weight: bold; }}
+    .value  {{ font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #E5E7EB; }}
+    .cc     {{ font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #475569; }}
+    .head   {{ font-family: 'Courier New', Consolas, monospace; font-size: 17px; fill: #7C3AED; font-weight: bold; }}
+    .accent {{ font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #10B981; font-weight: bold; }}
+    text, tspan {{ white-space: pre; }}
+    .term-label {{ font-family: 'Courier New', Consolas, monospace; font-size: 12px; fill: #64748B; letter-spacing: 0.5px; }}
+    .scan-label {{ font-family: 'Courier New', Consolas, monospace; font-size: 10px; fill: #F87171; letter-spacing: 1px; }}
+    .panel-title {{ font-family: 'Courier New', Consolas, monospace; font-size: 11px; fill: #38BDF8; letter-spacing: 2px; opacity: 0.7; }}
+    .cursor-blink {{ fill: #22D3EE; }}
 """
 
-LIGHT_DEFS_STYLE = """
-    .ascii  { font-family: 'Courier New', Consolas, monospace; font-size: 7.4px; fill: url(#asciiGrad); letter-spacing: -0.2px; }
-    .key    { font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #0EA5E9; font-weight: bold; }
-    .value  { font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #0F172A; }
-    .cc     { font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #94A3B8; }
-    .head   { font-family: 'Courier New', Consolas, monospace; font-size: 17px; fill: #7C3AED; font-weight: bold; }
-    .accent { font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #059669; font-weight: bold; }
-    text, tspan { white-space: pre; }
-    .term-label { font-family: 'Courier New', Consolas, monospace; font-size: 12px; fill: #64748B; letter-spacing: 0.5px; }
-    .scan-label { font-family: 'Courier New', Consolas, monospace; font-size: 10px; fill: #DC2626; letter-spacing: 1px; }
-    .panel-title { font-family: 'Courier New', Consolas, monospace; font-size: 11px; fill: #0284C7; letter-spacing: 2px; opacity: 0.75; }
-    .cursor-blink { fill: #0EA5E9; }
+LIGHT_DEFS_STYLE = f"""
+    .ascii  {{ font-family: 'Courier New', Consolas, monospace; font-size: {ASCII_FONT_SIZE}px; fill: url(#asciiGrad); letter-spacing: -0.35px; }}
+    .key    {{ font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #0EA5E9; font-weight: bold; }}
+    .value  {{ font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #0F172A; }}
+    .cc     {{ font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #94A3B8; }}
+    .head   {{ font-family: 'Courier New', Consolas, monospace; font-size: 17px; fill: #7C3AED; font-weight: bold; }}
+    .accent {{ font-family: 'Courier New', Consolas, monospace; font-size: 15px; fill: #059669; font-weight: bold; }}
+    text, tspan {{ white-space: pre; }}
+    .term-label {{ font-family: 'Courier New', Consolas, monospace; font-size: 12px; fill: #64748B; letter-spacing: 0.5px; }}
+    .scan-label {{ font-family: 'Courier New', Consolas, monospace; font-size: 10px; fill: #DC2626; letter-spacing: 1px; }}
+    .panel-title {{ font-family: 'Courier New', Consolas, monospace; font-size: 11px; fill: #0284C7; letter-spacing: 2px; opacity: 0.75; }}
+    .cursor-blink {{ fill: #0EA5E9; }}
 """
 
 
