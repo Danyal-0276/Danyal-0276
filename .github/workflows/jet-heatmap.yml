@@ -1,16 +1,17 @@
 name: Update jet heatmap SVG
 
 on:
-  schedule:
-    # Runs once a day at 05:30 UTC. Adjust as you like.
-    - cron: "30 5 * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
+concurrency:
+  group: profile-jet-heatmap
+
 jobs:
   build:
+    if: github.ref_name == github.event.repository.default_branch && github.ref_type == 'branch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,5 +32,5 @@ jobs:
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: update jet heatmap SVG"
+          commit_message: "chore: refresh profile contribution heatmap"
           file_pattern: dist/github-jet.svg
