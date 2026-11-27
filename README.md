@@ -22,7 +22,7 @@ I build web and mobile products with TypeScript and Python, from interfaces and 
 - **[TRAK](https://trak-fyp.netlify.app/)** — My capstone news credibility platform. I worked on fine-tuning RoBERTa and DeBERTa on 220,000+ labeled samples and connecting the models to a React Native app.
 - **[Throne of Glass Archive](https://throne-of-glass-rag.vercel.app/)** — An educational fan project with source-linked, streaming answers and spoiler-aware retrieval, built with FastAPI and pgvector.
 
-[See more projects and research](https://danyal.portfilio.live/#work)
+[More projects](https://danyal.portfilio.live/#work) · [My research on misinformation detection](https://danyal.portfilio.live/#research)
 
 ## Languages and tools
 
