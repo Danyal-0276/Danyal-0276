@@ -13,8 +13,8 @@ ROWS = 50
 GLYPHS = ".,:;irsXA253hMHGS#9B&@"
 
 THEMES = {
-    "dark": ("#101a17", "#31443c", "#eff7ee", "#afc6bc", "#a5efb3"),
-    "light": ("#f1f7f0", "#c5d7ca", "#152720", "#455e52", "#235e43"),
+    "dark": ("#0d1117", "#30363d", "#f0f6fc", "#a6b3c2", "#79b8ff"),
+    "light": ("#f6f8fa", "#d0d7de", "#1f2328", "#57606a", "#0969da"),
 }
 
 
@@ -41,26 +41,66 @@ def make_ascii(photo: Path, crop: tuple[int, int, int, int] | None) -> list[str]
 
 def build_banner(lines: list[str], colors: tuple[str, str, str, str, str]) -> str:
     background, border, ink, muted, accent = colors
-    portrait = "\n".join(
-        f'<text x="587" y="{46 + index * 6.68:.2f}" textLength="299" lengthAdjust="spacingAndGlyphs">{escape(line)}</text>'
-        for index, line in enumerate(lines)
-    )
+    portrait_bands = []
+    for start in range(0, ROWS, 10):
+        rows = "\n".join(
+            f'<text x="587" y="{46 + index * 6.68:.2f}" textLength="299" lengthAdjust="spacingAndGlyphs">{escape(line)}</text>'
+            for index, line in enumerate(lines[start:start + 10], start)
+        )
+        delay = 0.15 + start * 0.019
+        portrait_bands.append(f'<g class="portrait-band" style="--delay: {delay:.2f}s">\n{rows}\n</g>')
+    portrait = "\n".join(portrait_bands)
+
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 400" role="img" aria-labelledby="title description">
 <title id="title">Danyal Tanveer</title>
-<desc id="description">Full-stack engineer working on web, mobile, and applied AI, based in Lahore, Pakistan. A green ASCII portrait appears on the right.</desc>
+<desc id="description">Full-stack engineer working on web, mobile, and applied AI, based in Lahore, Pakistan. A blue ASCII portrait appears on the right.</desc>
+<style>
+  @media (prefers-reduced-motion: no-preference) {{
+    .reveal {{ animation: reveal .55s ease-out var(--delay, 0s) both; }}
+    .portrait-band {{ animation: resolve .36s steps(4, end) var(--delay) both; }}
+    .scan {{ animation: sweep 1.3s ease-out .12s both; }}
+    .cursor {{ animation: flicker .48s steps(1, end) .65s 2; }}
+  }}
+  @keyframes reveal {{
+    from {{ opacity: .2; transform: translateX(-7px); }}
+    to {{ opacity: 1; transform: translateX(0); }}
+  }}
+  @keyframes resolve {{
+    from {{ opacity: .18; }}
+    to {{ opacity: 1; }}
+  }}
+  @keyframes sweep {{
+    0% {{ opacity: 0; transform: translateY(0); }}
+    18% {{ opacity: .52; }}
+    82% {{ opacity: .35; }}
+    100% {{ opacity: 0; transform: translateY(339px); }}
+  }}
+  @keyframes flicker {{
+    50% {{ opacity: .15; }}
+  }}
+</style>
 <rect x="1" y="1" width="918" height="398" rx="20" fill="{background}" stroke="{border}" stroke-width="2"/>
-<path d="M47 55h42m-42 282h474" stroke="{border}" stroke-width="2"/>
-<path d="M47 55h14" stroke="{accent}" stroke-width="2"/>
-<g font-family="system-ui, Segoe UI, sans-serif" fill="{ink}" font-weight="700" letter-spacing="-3">
-  <text x="43" y="145" font-size="74">Danyal</text>
-  <text x="43" y="219" font-size="74">Tanveer</text>
+<g aria-hidden="true" font-family="Consolas, Menlo, monospace" font-size="15">
+  <path d="m49 51 5 4-5 4" fill="none" stroke="{accent}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="66" y="60" fill="{muted}">~/danyal-0276</text>
+  <path d="M49 335h471" stroke="{border}"/>
 </g>
-<text x="47" y="275" fill="{accent}" font-family="system-ui, Segoe UI, sans-serif" font-size="26" font-weight="600">Full-stack engineer</text>
-<text x="47" y="311" fill="{muted}" font-family="system-ui, Segoe UI, sans-serif" font-size="21">Web, mobile, and applied AI</text>
-<text x="47" y="365" fill="{muted}" font-family="Consolas, Menlo, monospace" font-size="15">Lahore, Pakistan</text>
-<rect x="574.5" y="20.5" width="324" height="359" rx="12" fill="#0b1813" stroke="{border}"/>
-<g aria-hidden="true" font-family="Consolas, Menlo, monospace" font-size="6.8" fill="#97e5aa" xml:space="preserve">
+<g font-family="system-ui, Segoe UI, sans-serif">
+  <text class="reveal" x="45" y="146" fill="{ink}" font-size="64" font-weight="630" letter-spacing="-2.5">Danyal</text>
+  <text class="reveal" style="--delay: .14s" x="43" y="228" fill="{accent}" font-size="88" font-weight="790" letter-spacing="-4">Tanveer<tspan class="cursor" dx="14" font-size="42" letter-spacing="0" aria-hidden="true">_</tspan></text>
+  <g class="reveal" style="--delay: .32s">
+    <text x="49" y="281" fill="{ink}" font-size="26" font-weight="600">Full-stack engineer</text>
+    <text x="49" y="311" fill="{muted}" font-size="20">Web, mobile, and applied AI</text>
+  </g>
+</g>
+<text x="49" y="362" fill="{muted}" font-family="Consolas, Menlo, monospace" font-size="15">Lahore, Pakistan</text>
+<rect x="574.5" y="20.5" width="324" height="359" rx="12" fill="#101a29" stroke="{border}"/>
+<g aria-hidden="true" font-family="Consolas, Menlo, monospace" font-size="6.8" fill="#9ec6ef" xml:space="preserve">
 {portrait}
+</g>
+<g aria-hidden="true" fill="none" stroke="#8bbdff">
+  <path d="M582 45v-13h14m282 0h13v13m0 309v13h-13m-282 0h-14v-13" opacity=".55"/>
+  <path class="scan" d="M584 31h305" opacity="0"/>
 </g>
 </svg>
 '''
